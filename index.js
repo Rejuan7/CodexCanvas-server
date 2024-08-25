@@ -30,7 +30,7 @@ async function run() {
 
     const adminCollection = client.db("canvasDB").collection("admin");
     const courseCollection = client.db("canvasDB").collection("course");
-
+    const blogCollection = client.db("canvasDB").collection("blog");
 
     //Admin related.........................
 
@@ -105,20 +105,71 @@ async function run() {
       }
     });
 
-    //Course related.............................
+    //Blog related...............................
 
-    app.post('/course', async(req, res) =>{
-      const newCourse = req.body;
-      const result = await courseCollection.insertOne(newCourse);
+    app.get('/addBlog', async(req,res) =>{
+      const result = await blogCollection.find().toArray();
       res.send(result);
     })
 
-    app.get('/course', async(req,res) =>{
-      const result = await courseCollection.find().toArray();
-      res.send(result); 
+    app.post('/addBlog', async(req,res) =>{
+      const newBlog = req.body;
+      const result = await blogCollection.insertOne(newBlog);
+      res.send(result);
     })
 
+    //Course related.............................
 
+    app.get("/course", async (req, res) => {
+      const result = await courseCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/course", async (req, res) => {
+      const newCourse = req.body;
+      const result = await courseCollection.insertOne(newCourse);
+      res.send(result);
+    });
+
+    app.patch("/course/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updatedCourse = req.body;
+
+        const { title, details, price, category, duration, image } =
+          updatedCourse;
+
+        const updatedFields = {
+          $set: {
+            title: title,
+            details: details,
+            price: price,
+            category: category,
+            duration: duration,
+            image: image,
+          },
+        };
+
+        const result = await courseCollection.updateOne(
+          filter,
+          updatedFields,
+          options
+        );
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating course:", error);
+        res.status(500).send("Error updating course");
+      }
+    });
+
+    app.delete("/course/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await courseCollection.deleteOne(query);
+      res.send(result);
+    });
 
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
