@@ -107,16 +107,53 @@ async function run() {
 
     //Blog related...............................
 
-    app.get('/addBlog', async(req,res) =>{
+    app.get("/addBlog", async (req, res) => {
       const result = await blogCollection.find().toArray();
       res.send(result);
-    })
+    });
 
-    app.post('/addBlog', async(req,res) =>{
+    app.post("/addBlog", async (req, res) => {
       const newBlog = req.body;
       const result = await blogCollection.insertOne(newBlog);
       res.send(result);
+    });
+
+    app.patch("/addBlog/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updatedBlog = req.body;
+        const { title, url, description, category } = updatedBlog;
+
+        const updatedFields = {
+          $set: {
+            title: title,
+            url: url,
+            description: description,
+            category: category,
+          },
+        };
+
+        const result = await blogCollection.updateOne(
+          filter,
+          updatedFields,
+          options
+        );
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating blog:", error);
+        res.status(500).send("Error updating blog");
+      }
+    });
+
+    app.delete('/addBlog/:id', async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await blogCollection.deleteOne(query);
+      res.send(result);
     })
+
 
     //Course related.............................
 
